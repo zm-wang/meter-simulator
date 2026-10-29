@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>电表模拟器使用说明</title>
+<style>
+  :root { --fg:#1f2933; --muted:#616e7c; --line:#e4e7eb; --accent:#0b6e79; --bg:#ffffff; --code:#f5f7fa; --warn:#b44d12; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e4e7eb; --muted:#9aa5b1; --line:#3e4c59; --accent:#4fc3c9; --bg:#1a1f24; --code:#252c33; --warn:#f0a35e; }
+  }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.7 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:26px; margin:8px 0 4px; }
+  h2 { font-size:20px; margin:36px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--line); color:var(--accent); }
+  h3 { font-size:16px; margin:22px 0 6px; }
+  p.lead { color:var(--muted); margin-top:0; }
+  table { width:100%; border-collapse:collapse; margin:10px 0 16px; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top; }
+  th { background:var(--code); }
+  code, pre { font-family:Menlo, Consolas, monospace; font-size:13px; background:var(--code); border-radius:4px; }
+  code { padding:1px 5px; }
+  pre { padding:10px 12px; overflow-x:auto; }
+  .note { border-left:4px solid var(--warn); background:var(--code); padding:8px 12px; margin:12px 0; }
+  .wrap { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+<h1>IEC 62056-21 电表模拟器使用说明</h1>
+<p class="lead">用于排查 MG301 DTU 对接 IEC 62056-21 电表时的“不工作”问题：让 DTU 去读模拟器，看握手卡在哪一步，并直接得到修正建议。程序界面支持 English（默认）、简体中文、Español，菜单「帮助 → 使用方法」（F1）里有三种语言的简版说明。</p>
+
+<h2>一、概述</h2>
+<p>模拟器扮演<strong>电表（从站）</strong>，DTU 扮演<strong>主站</strong>。DTU 发出的每一条报文都会被逐字节记录和解析；不符合协议时，日志会指出问题并给出正确写法。</p>
+<p><strong>核心能力：</strong></p>
+<ul>
+  <li><strong>跨平台、免装 Python</strong>：提供 Windows 安装程序、macOS 磁盘映像（DMG）、Linux 压缩包，双击即可运行。</li>
+  <li><strong>全模式</strong>：支持 IEC 62056-21 的 Mode A、B、C、D、E。</li>
+  <li><strong>多种连接</strong>：串口、TCP 服务端、TCP 客户端、UDP。</li>
+  <li><strong>过程可视、日志可导出</strong>：状态条逐步显示握手过程，日志可导出为 TXT / CSV。</li>
+  <li><strong>报文诊断</strong>：主站报文有问题时，日志指出问题并给出正确报文。</li>
+  <li><strong>多语言、内置帮助、关于、版本更新检测</strong>。</li>
+</ul>
+<div class="wrap"><table>
+  <tr><th>文件</th><th>用途</th></tr>
+  <tr><td><code>电表模拟器.py</code></td><td>图形界面主程序</td></tr>
+  <tr><td><code>meter_core.py</code></td><td>协议引擎和传输层；也可以作为命令行版单独运行，适合无界面的 Linux 机器</td></tr>
+  <tr><td><code>app_info.py</code></td><td>版本号、开发者信息、更新源（GitHub 仓库）</td></tr>
+  <tr><td><code>i18n.py</code> / <code>translations.py</code></td><td>多语言切换和英文、西班牙文译文表</td></tr>
+  <tr><td><code>help_content.py</code></td><td>程序内「使用方法」的三种语言内容</td></tr>
+  <tr><td><code>updater.py</code></td><td>版本更新检测</td></tr>
+  <tr><td><code>master测试.py</code></td><td>自动测试：用独立的主站实现验证模拟器，并检查多语言和更新检测</td></tr>
+  <tr><td><code>packaging/</code></td><td>打包脚本 <code>build.py</code>、Windows 安装脚本 <code>installer.iss</code>、图标</td></tr>
+  <tr><td><code>.github/workflows/build.yml</code></td><td>在 GitHub 上自动测试并打包三个平台的安装包，推送版本标签时自动发布</td></tr>
+</table></div>
+
+<h2>二、快速开始</h2>
+<h3>1. 安装</h3>
+<table>
+  <tr><th>系统</th><th>安装包</th><th>安装方法</th></tr>
+  <tr><td>Windows 10/11（64 位）</td><td><code>MeterSimulator-版本-windows-setup.exe</code></td><td>双击安装，默认装在当前用户目录，不需要管理员权限；完成后在开始菜单打开</td></tr>
+  <tr><td>macOS（Apple 芯片）</td><td><code>MeterSimulator-版本-macos-arm64.dmg</code></td><td>打开 DMG，把 MeterSimulator 拖到 Applications 文件夹</td></tr>
+  <tr><td>macOS（Intel）</td><td><code>MeterSimulator-版本-macos-x86_64.dmg</code></td><td>同上</td></tr>
+  <tr><td>Linux（x86_64）</td><td><code>MeterSimulator-版本-linux-x86_64.tar.gz</code></td><td>解压后运行 <code>MeterSimulator/MeterSimulator</code></td></tr>
+</table>
+<div class="note">安装包目前没有做代码签名，首次打开时系统会拦截：
+<ul>
+  <li><strong>macOS</strong>：提示“无法验证开发者”时，到「系统设置 → 隐私与安全性」点「仍要打开」。</li>
+  <li><strong>Windows</strong>：SmartScreen 提示时，点「更多信息 → 仍要运行」。</li>
+</ul>
+要彻底消除提示，需要公司的 Apple Developer ID 和 Windows 代码签名证书。</div>
+<p>也可以直接用源码运行：</p>
+<pre>pip install -r requirements.txt
+python3 电表模拟器.py        # macOS / Linux
+py 电表模拟器.py             # Windows</pre>
+
+<h3>2. 接线（串口方式）</h3>
+<ul>
+  <li><strong>RS-485</strong>：USB 转 485 模块的 A 接 DTU 的 A，B 接 B，最好共地。</li>
+  <li><strong>RS-232</strong>：TX 接 RX，RX 接 TX，GND 接 GND。</li>
+  <li>macOS 上请选择 <code>/dev/cu.*</code> 开头的端口；Windows 上是 <code>COMx</code>；Linux 上是 <code>/dev/ttyUSB*</code>，当前用户需要在 <code>dialout</code> 组里。</li>
+</ul>
+
+<h3>3. 典型 Mode C 设置</h3>
+<table>
+  <tr><th>项目</th><th>标准做法</th><th>若 DTU 使用固定波特率</th></tr>
+  <tr><td>初始波特率</td><td>300</td><td>与 DTU 一致，例如 9600</td></tr>
+  <tr><td>数据位 / 校验 / 停止位</td><td>7 / E / 1</td><td>7 / E / 1</td></tr>
+  <tr><td>波特率字符</td><td>5（握手后切到 9600）</td><td>与初始波特率对应，例如 9600 对应 5，此时不切速</td></tr>
+</table>
+<p>设置好后点击「▶ 启动」，再让 DTU 开始抄表即可。</p>
+
+<h2>三、功能详解</h2>
+<h3>1. 连接方式</h3>
+<table>
+  <tr><th>方式</th><th>说明</th><th>波特率切换</th></tr>
+  <tr><td>串口</td><td>直接连接 DTU 的 485 或 232 口</td><td>真实切换，发完数据后恢复初始波特率</td></tr>
+  <tr><td>TCP 服务端</td><td>模拟器监听端口，等待主站连接</td><td>不适用，自动跳过</td></tr>
+  <tr><td>TCP 客户端</td><td>模拟器主动连接主站，断线后每 3 秒自动重连</td><td>不适用</td></tr>
+  <tr><td>UDP</td><td>应答发给最近一次发来数据的主站；Mode D 主动推送时可指定目标地址</td><td>不适用</td></tr>
+</table>
+<p>如果主站在网络透传时保留了 7E1 的校验位（字节最高位为 1），请勾选「接收时去掉最高位」。</p>
+
+<h3>2. 协议模式</h3>
+<table>
+  <tr><th>模式</th><th>流程</th><th>默认初始波特率 / 波特率字符</th></tr>
+  <tr><td>A</td><td>请求 → 标识 → 数据，全程不切速</td><td>300 / J</td></tr>
+  <tr><td>B</td><td>请求 → 标识 → 按字符 A~F 切速 → 数据，没有 ACK</td><td>300 / E（9600）</td></tr>
+  <tr><td>C</td><td>请求 → 标识 → ACK 选项 → 切速 → 数据读取或编程模式</td><td>300 / 5（9600）</td></tr>
+  <tr><td>D</td><td>电表以 2400 bps 主动推送，不响应请求；可手动推送或定时推送</td><td>2400 / 3</td></tr>
+  <tr><td>E</td><td>同 Mode C 握手，标识带 <code>\2</code>；ACK 选 2 后进入 HDLC 模式</td><td>300 / 5</td></tr>
+</table>
+<p><strong>编程模式</strong>（Mode C/E，ACK 中 Y=1）支持：<code>P1</code>/<code>P2</code> 口令；<code>R1~R6</code> 读、<code>W1~W5</code> 写、<code>E1/E2</code> 执行；<code>B0</code> 结束会话；主站发 <code>NAK</code> 时电表重发上一条报文。写入的值会实时更新到数据项表。</p>
+
+<h3>3. 电表设置</h3>
+<table>
+  <tr><th>字段</th><th>说明</th></tr>
+  <tr><td>厂商ID</td><td>3 个字母。第 3 个字母小写表示最短响应时间为 20 ms，大写为 200 ms</td></tr>
+  <tr><td>波特率字符</td><td>写在标识报文中，主站据此切速</td></tr>
+  <tr><td>表地址</td><td>留空表示接受任意地址。填写后，地址不符的请求不予应答（与真实电表一致）</td></tr>
+  <tr><td>编程口令</td><td>P1 明文口令校验。留空表示不校验</td></tr>
+  <tr><td>响应延时</td><td>每次应答前的等待时间，标准范围为 20/200 ~ 1500 ms，超出范围时日志会提示</td></tr>
+  <tr><td>ACK 超时</td><td>发出标识后等待 ACK 的最长时间</td></tr>
+  <tr><td>故障注入</td><td>可选：不回复标识、收到 ACK 后不发数据、数据 BCC 故意出错。用于验证 DTU 的容错能力</td></tr>
+</table>
+<p>关闭程序时会记住当前的连接和电表设置，下次打开自动恢复。</p>
+
+<h3>4. 连接过程</h3>
+<p>界面中部的状态条按当前模式显示每一步，例如 Mode C 为：请求 → 标识 → ACK确认 → 切速 → 数据/编程 → 结束。颜色含义：灰色未开始，黄色进行中，绿色 ✓ 完成，红色 ✗ 失败，浅灰 – 跳过（例如网络连接不需要切速）。出现问题时，状态条下方直接显示问题和建议。</p>
+
+<h3>5. 日志与导出</h3>
+<ul>
+  <li>收发报文同时显示可读形式（如 <code>&lt;STX&gt;</code>、<code>&lt;CR&gt;&lt;LF&gt;</code>）和 HEX，并带毫秒时间戳。</li>
+  <li>日志颜色：蓝色为收到的报文，绿色为发出的报文，红色粗体为问题，紫红色为建议，橙色为警告。</li>
+  <li>勾选「只看问题」后只显示问题、建议、警告、连接和会话分隔。</li>
+  <li>「导出日志…」可保存为 <code>.txt</code>（可读文本）或 <code>.csv</code>（Excel 可直接打开）。</li>
+  <li>勾选「自动保存日志」后，日志实时写入日志文件夹，程序意外退出也不会丢失。安装版写入「文稿/MeterSimulator Logs」，源码运行时写入程序目录下的 <code>logs/</code>。菜单「文件 → 打开日志文件夹」可直接打开。</li>
+  <li>日志使用当前界面语言；把英文日志发给国内同事前，可先切到中文再复现一次。</li>
+</ul>
+
+<h3>6. 报文诊断</h3>
+<p>以下情况会在日志中标为「问题」，并给出建议：</p>
+<div class="wrap"><table>
+  <tr><th>场景</th><th>日志给出的建议</th></tr>
+  <tr><td>请求缺少 <code>&lt;CR&gt;&lt;LF&gt;</code></td><td>给出完整请求和 HEX，并提醒很多真实电表会因此不应答</td></tr>
+  <tr><td>请求格式错误（缺少 <code>?</code> 或 <code>!</code>）</td><td>正确格式 <code>/?地址!&lt;CR&gt;&lt;LF&gt;</code></td></tr>
+  <tr><td>请求地址与电表地址不一致</td><td>应填写的地址，或改用广播请求</td></tr>
+  <tr><td>收到标识后没有发 ACK</td><td>检查 7E1 和波特率字符；DTU 若按 Mode A/B 工作，可切换模拟器模式验证</td></tr>
+  <tr><td>没发 ACK 就重发请求</td><td>说明 DTU 没解析出标识，列出排查顺序</td></tr>
+  <tr><td>ACK 不完整，或 V/Z/Y 无效</td><td>给出该电表应收到的完整 ACK 和 HEX</td></tr>
+  <tr><td>主站要求的波特率高于电表提议</td><td>Z 只能等于或低于标识中的字符</td></tr>
+  <tr><td>字节最高位被置位</td><td>判定为 7E1 与 8 位不匹配，并说明串口和网络两种场景下的改法</td></tr>
+  <tr><td>乱码</td><td>判定为波特率不一致或切速时机不对</td></tr>
+  <tr><td>Mode C 下收到 HDLC 请求</td><td>建议切换到 Mode E，或改用读数 ACK</td></tr>
+  <tr><td>编程模式 BCC 错误</td><td>给出正确的 BCC 值、计算范围和整条报文的正确 HEX</td></tr>
+  <tr><td>口令错误、未登录就读写、读不存在的地址</td><td>给出正确口令格式；读地址时列出相近或可用的地址</td></tr>
+  <tr><td>回显</td><td>提示 RS-485/光口回环，回显不参与解析</td></tr>
+</table></div>
+
+<h3>7. 界面语言</h3>
+<p>菜单「Language / 语言 / Idioma」可在 English、简体中文、Español 之间切换，默认英文，选择会被记住。切换时如果模拟器正在运行，会先询问并停止；已有的日志和设置会保留。界面文字、日志里的问题和建议、导出的 CSV 表头都会跟随语言变化。</p>
+
+<h3>8. 使用方法与关于</h3>
+<ul>
+  <li><strong>帮助 → 使用方法</strong>（快捷键 F1）：程序内置的说明，内容跟随界面语言。</li>
+  <li><strong>关于</strong>（macOS 在应用菜单，Windows/Linux 在「帮助」菜单）：显示版本号、开发者 InHand Networks、联系邮箱、网站、更新源和运行环境。邮箱和网站可点击打开。</li>
+</ul>
+
+<h3>9. 版本更新检测</h3>
+<p>程序从 GitHub Releases 读取最新版本号，与当前版本比较：</p>
+<ul>
+  <li><strong>帮助 → 检查更新…</strong>：手动检查，总会给出结果（已是最新、发现新版本或失败原因）。</li>
+  <li><strong>启动时自动检查</strong>：默认开启，启动 3 秒后在后台检查，只在有新版本时弹窗；可在「帮助」菜单关闭。</li>
+  <li>新版本弹窗显示更新内容，提供「下载新版本」（直接下载本平台的安装包）、「稍后提醒」「跳过此版本」。</li>
+</ul>
+<div class="note">更新检测需要先在 <code>app_info.py</code> 中把 <code>GITHUB_REPO</code> 设为公开仓库，例如 <code>"inhand/meter-simulator"</code>。目前为空，「检查更新」会提示“未配置更新源”。</div>
+
+<h3>10. 发布新版本</h3>
+<ol>
+  <li>修改 <code>app_info.py</code> 中的 <code>VERSION</code>，例如 <code>1.0.1</code>。</li>
+  <li>提交代码并推送标签 <code>v1.0.1</code>。</li>
+  <li>GitHub Actions 自动运行测试，然后在 Windows、macOS（Apple 芯片 / Intel）、Linux 上分别打包，并创建 Release。已安装的程序即可检测到新版本。</li>
+</ol>
+<p>本地只能打包当前系统的安装包：</p>
+<pre>pip install pyinstaller pyserial pillow certifi
+python packaging/build.py     # 输出到 dist/</pre>
+
+<h3>11. 命令行版与自测</h3>
+<pre>python3 meter_core.py --tcp-server 0.0.0.0:7000 --mode C --lang zh --log 会话.csv
+python3 meter_core.py --serial COM3 --baud 300 --format 7E1 --mode C
+python3 master测试.py                       # 网络、诊断、多语言、更新检测，共 43 项
+python3 master测试.py --serial 端口A 端口B   # 两个串口对接后，用 pwitab 走串口读数</pre>
+
+<h2>四、常见问题</h2>
+<h3>DTU 读不到数据，先看哪里？</h3>
+<p>先勾选「只看问题」，看状态条在哪一步变红：</p>
+<ul>
+  <li><strong>「请求」没亮</strong>：模拟器没收到任何报文，检查接线、端口和波特率。</li>
+  <li><strong>停在「ACK确认」</strong>：最常见的原因是 DTU 没正确解析标识，或者 DTU 实际按 Mode A/B 工作。</li>
+  <li><strong>「切速」之后出现乱码</strong>：DTU 切速的时机或目标波特率不对。</li>
+</ul>
+
+<h3>用 pwitab 走真实串口测试时读不到数据</h3>
+<p>pwitab 发出 ACK 后要等约 0.75 秒才切换波特率。请把模拟器的响应延时设为 1000 ms 左右（标准上限为 1500 ms），否则数据会在它切速之前发出。</p>
+
+<h3>「检查更新」失败</h3>
+<ul>
+  <li>提示“未配置更新源”：<code>app_info.py</code> 的 <code>GITHUB_REPO</code> 为空。</li>
+  <li>提示“还没有发布过版本，或仓库不是公开仓库”：仓库还没有 Release，或仓库是私有的（程序无法匿名读取私有仓库）。</li>
+  <li>网络错误：检查电脑能否访问 <code>api.github.com</code>。</li>
+</ul>
+
+<h3>Mode E 能抄 DLMS 数据吗？</h3>
+<p>不能。模拟器只实现到进入 HDLC 为止，之后只记录收到的帧，不实现 DLMS/COSEM 应用层。如果需要，可以另行接入 Gurux 等 DLMS 服务端。</p>
+
+<h3>已知限制</h3>
+<ul>
+  <li>Mode A/B 只支持数据读取，不支持编程模式。</li>
+  <li>读数不支持分块（EOT）传输；不支持厂商自定义模式（Y=6~9）。</li>
+  <li>安装包未做代码签名，首次打开会被系统拦截（见“安装”一节）。</li>
+  <li>macOS（Apple 芯片）安装包已在本机构建并验证能启动；Windows、Intel Mac、Linux 安装包由 GitHub Actions 构建，尚未实测。</li>
+  <li>串口自测用的是虚拟串口，只验证了报文流程；7E1 和切速的实际电气时序，需要用两根 USB 串口线对接确认。</li>
+</ul>
+</main>
+</body>
+</html>
